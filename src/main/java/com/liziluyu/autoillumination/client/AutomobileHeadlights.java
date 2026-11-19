@@ -7,6 +7,7 @@ import com.liziluyu.autoillumination.client.beam.BeamStyle;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
 import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -55,27 +56,16 @@ public final class AutomobileHeadlights {
                 if (lights.isEmpty()) {
                     continue;
                 }
-                Vec3 entityOrigin = new Vec3(Mth.lerp(partialTick, automobile.xOld, automobile.getX()),
-                    Mth.lerp(partialTick, automobile.yOld, automobile.getY()),
-                    Mth.lerp(partialTick, automobile.zOld, automobile.getZ()));
-
-                Matrix4f framePose = AutomobileModelPose.beamToEntityLocal(automobile, partialTick);
                 for (FrameLightProfiles.Beam light : lights) {
                     // Profile sizes are full diameters in 1/16 blocks; the renderer uses half sizes.
                     BeamStyle style = new BeamStyle(settings.length(), light.width16() / 32f,
                         light.height16() / 32f, settings.spread(), settings.opacity(),
                         settings.opacity() * 0.6f, 3f, settings.color());
-                    // Beam-local +Y points down after the model's Z180 conversion. Profiles use +Y up.
-                    Matrix4f beamToEntity = new Matrix4f(framePose).translate(light.offsetX16() / 16f,
-                        -light.offsetY16() / 16f, light.offsetZ16() / 16f)
-                        // Translate first so each lamp rotates about its own emitting face.
-                        .rotateY((float) Math.toRadians(light.yawDegrees()))
-                        .rotateX((float) Math.toRadians(-light.pitchDegrees()))
-                        .rotateZ((float) Math.toRadians(light.rollDegrees()));
-                    Vector3f localStart = beamToEntity.transformPosition(new Vector3f());
-                    Vector3f localForward = beamToEntity.transformDirection(new Vector3f(0f, 0f, 1f)).normalize();
-                    Vec3 origin = entityOrigin.add(localStart.x, localStart.y, localStart.z);
-                    Vec3 direction = new Vec3(localForward.x, localForward.y, localForward.z);
+                    BeamPose pose = beamPose(automobile, light, partialTick);
+                    Matrix4f beamToEntity = pose.beamToEntity();
+                    Vec3 entityOrigin = pose.entityOrigin();
+                    Vec3 origin = pose.origin();
+                    Vec3 direction = pose.direction();
                     Vec3 end = origin.add(direction.scale(style.range()));
                     if (!event.getFrustum().isVisible(
                             new AABB(origin, end).inflate(style.boundingRadius(style.range())))) {
@@ -107,5 +97,53 @@ public final class AutomobileHeadlights {
                 buffers.endBatch(BeamRenderer.renderType());
             }
         }
+    }
+
+    /** Collects world-space origins and clipped endpoints for all active vehicle beams. */
+    public static void collectLightEndpoints(ClientLevel level, Consumer<Vec3> endpoint) {
+        if (level == null || endpoint == null) {
+            return;
+        }
+        HeadlightConfig.Settings settings = HeadlightConfig.current();
+        if (settings.opacity() <= 0f) {
+            return;
+        }
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!(entity instanceof AutomobileEntity automobile) || automobile.isRemoved()) {
+                continue;
+            }
+            List<FrameLightProfiles.Beam> lights = FrameLightProfiles.beams(automobile.getFrame().getId());
+            for (FrameLightProfiles.Beam light : lights) {
+                BeamPose pose = beamPose(automobile, light, 1f);
+                float length = BeamRenderer.clipLength(level, pose.origin(), pose.direction(),
+                    settings.length(), automobile);
+                if (length > 0f) {
+                    endpoint.accept(pose.origin());
+                    endpoint.accept(pose.origin().add(pose.direction().scale(length)));
+                }
+            }
+        }
+    }
+
+    private static BeamPose beamPose(AutomobileEntity automobile, FrameLightProfiles.Beam light,
+            float partialTick) {
+        Vec3 entityOrigin = new Vec3(Mth.lerp(partialTick, automobile.xOld, automobile.getX()),
+            Mth.lerp(partialTick, automobile.yOld, automobile.getY()),
+            Mth.lerp(partialTick, automobile.zOld, automobile.getZ()));
+        // Beam-local +Y points down after the model's Z180 conversion. Profiles use +Y up.
+        Matrix4f beamToEntity = AutomobileModelPose.beamToEntityLocal(automobile, partialTick)
+            .translate(light.offsetX16() / 16f, -light.offsetY16() / 16f, light.offsetZ16() / 16f)
+            // Translate first so each lamp rotates about its own emitting face.
+            .rotateY((float) Math.toRadians(light.yawDegrees()))
+            .rotateX((float) Math.toRadians(-light.pitchDegrees()))
+            .rotateZ((float) Math.toRadians(light.rollDegrees()));
+        Vector3f localStart = beamToEntity.transformPosition(new Vector3f());
+        Vector3f localForward = beamToEntity.transformDirection(new Vector3f(0f, 0f, 1f)).normalize();
+        Vec3 origin = entityOrigin.add(localStart.x, localStart.y, localStart.z);
+        Vec3 direction = new Vec3(localForward.x, localForward.y, localForward.z);
+        return new BeamPose(entityOrigin, beamToEntity, origin, direction);
+    }
+
+    private record BeamPose(Vec3 entityOrigin, Matrix4f beamToEntity, Vec3 origin, Vec3 direction) {
     }
 }

@@ -10,6 +10,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import java.util.Locale;
+import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
@@ -93,6 +94,21 @@ public final class BeamPreview {
             throw INVALID_COLOR.create(value);
         }
         return Integer.parseInt(value, 16);
+    }
+
+    /** Collects the active preview's world-space origin and clipped endpoint, if present in this level. */
+    public static void collectLightEndpoints(ClientLevel level, Consumer<Vec3> endpoint) {
+        Preview current = preview;
+        if (level == null || endpoint == null || current == null || current.level() != level
+                || current.style().opacity() <= 0f) {
+            return;
+        }
+        float length = BeamRenderer.clipLength(level, current.origin(), current.direction(),
+            current.style().range(), Minecraft.getInstance().player);
+        if (length > 0f) {
+            endpoint.accept(current.origin());
+            endpoint.accept(current.origin().add(current.direction().scale(length)));
+        }
     }
 
     @SubscribeEvent

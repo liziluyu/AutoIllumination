@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.liziluyu.autoillumination.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "autoillumination.refmap.json",
+  "client": [
+    "client.LightEngineAccessor",
+    "client.BlockLightEngineMixin",
+    "client.LightEngineMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
