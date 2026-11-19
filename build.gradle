@@ -72,6 +72,8 @@ dependencies {
     implementation fg.deobf("maven.modrinth:automobility:${automobility_version}")
     localRuntime fg.deobf("maven.modrinth:riautomobility:${riautomobility_version}")
     localRuntime fg.deobf("maven.modrinth:geckolib:${geckolib_version}")
+    localRuntime fg.deobf("maven.modrinth:oculus:${oculus_version}")
+    localRuntime fg.deobf("maven.modrinth:embeddium:${embeddium_version}")
 }
 
 tasks.named('processResources', ProcessResources).configure {

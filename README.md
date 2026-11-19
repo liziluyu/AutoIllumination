@@ -72,7 +72,12 @@ Minecraft Forge 1.20.1 模组，包含可复用的客户端光柱渲染器和游
 - [RIAutomobility](https://modrinth.com/mod/riautomobility)：`1.0.4b`（JAR 内版本为 `1.0.4`），仅加入开发运行时。
 - [GeckoLib](https://modrinth.com/mod/geckolib/version/aC5KMoNg)：Forge 1.20.1 的 `4.8.4`，使用精确 Modrinth 版本 ID `aC5KMoNg` 固定，作为 RIAutomobility 所需的开发运行时依赖。同一个版本号对应多个加载器和 Minecraft 版本，仅使用 `4.8.4` 曾解析到 Fabric 1.21.4 文件，导致启动时找不到 `GeoModel`。
 
-依赖通过 Modrinth Maven 下载并由 ForgeGradle 反混淆。`localRuntime` 只扩展运行时类路径，RIAutomobility 和 GeckoLib 不会被声明为本模组的强制依赖，也不会打包进本模组 JAR。玩家安装本模组时需要自行安装 Automobility。
+- [Oculus](https://modrinth.com/mod/oculus/version/iQ1SwGc3)：Forge 1.20.1 的 `1.8.0`，仅加入开发运行时，用于测试光影包。
+- [Embeddium](https://modrinth.com/mod/embeddium/version/UTbfe5d1)：Forge 1.20.1 的 `0.3.31`，作为 Oculus 所需的开发运行时依赖。
+
+依赖通过 Modrinth Maven 下载并由 ForgeGradle 反混淆。`localRuntime` 只扩展运行时类路径，RIAutomobility、GeckoLib、Oculus 和 Embeddium 不会被声明为本模组的强制依赖，也不会打包进本模组 JAR。玩家安装本模组时需要自行安装 Automobility。
+
+开发客户端的光影包目录为 `run/shaderpacks/`。本地已放入 `BSL_v8.4p1.zip`，进入客户端后可在光影设置中选择。`run/` 已被 Git 忽略，光影包不随仓库提交或模组 JAR 分发。
 
 ## 仓库
 
