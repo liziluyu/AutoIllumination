@@ -1,0 +1,6 @@
+{
+  "commands.autoillumination.beam.preview": "已在前方固定光柱预览：长度 %s，信号 %s，颜色 %s。可绕行观察，使用 /autoillumination beam clear 清除。信号 0 时光柱隐藏。",
+  "commands.autoillumination.beam.cleared": "已清除光柱预览。",
+  "commands.autoillumination.beam.invalid_color": "光柱颜色“%s”无效。请使用六位十六进制 RGB，例如 FFE0A0（不带 #）。",
+  "commands.autoillumination.beam.no_player": "请先进入世界，再创建光柱预览。"
+}

@@ -1,0 +1,6 @@
+{
+  "commands.autoillumination.beam.preview": "Beam preview fixed in front of you: range %s, signal %s, color %s. Walk around to inspect; use /autoillumination beam clear to remove it. Signal 0 hides the beam.",
+  "commands.autoillumination.beam.cleared": "Beam preview cleared.",
+  "commands.autoillumination.beam.invalid_color": "Invalid beam color '%s'. Use six hexadecimal RGB digits, for example FFE0A0 (without #).",
+  "commands.autoillumination.beam.no_player": "Enter a world before creating a beam preview."
+}

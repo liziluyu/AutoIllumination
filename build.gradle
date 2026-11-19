@@ -22,6 +22,9 @@ minecraft {
         configureEach {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'debug'
+            // Dependency refmaps use SRG names; the development runtime uses official mappings.
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', file('build/createSrgToMcp/output.srg').absolutePath
             mods {
                 "${mod_id}" {
                     source sourceSets.main
