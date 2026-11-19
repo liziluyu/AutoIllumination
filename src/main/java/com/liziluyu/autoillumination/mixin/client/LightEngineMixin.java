@@ -1,6 +1,7 @@
 package com.liziluyu.autoillumination.mixin.client;
 
 import com.liziluyu.autoillumination.client.ClientBeamLights;
+import com.liziluyu.autoillumination.client.HeadlightActivation;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -30,9 +31,12 @@ public abstract class LightEngineMixin {
 
     @Inject(method = "queueSectionData", at = @At("TAIL"))
     private void autoillumination$rememberPacketLayer(long section, DataLayer data, CallbackInfo callback) {
-        if (data != null && (Object) this instanceof BlockLightEngine
-                && ((LightEngineAccessor) this).autoillumination$getChunkSource().getLevel() instanceof ClientLevel) {
-            autoillumination$packetSections.add(section);
+        if ((Object) this instanceof BlockLightEngine
+                && ((LightEngineAccessor) this).autoillumination$getChunkSource().getLevel() instanceof ClientLevel level) {
+            HeadlightActivation.recordServerBlockLight(level, section, data);
+            if (data != null) {
+                autoillumination$packetSections.add(section);
+            }
         }
     }
 

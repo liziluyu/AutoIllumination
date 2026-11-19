@@ -1,11 +1,14 @@
 package com.liziluyu.autoillumination.client;
 
 import com.liziluyu.autoillumination.AutoIllumination;
+import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -29,6 +32,9 @@ public final class ClientBeamLights {
     public static final int LIGHT_LEVEL = 15;
     private static Snapshot active = new Snapshot(null, Map.of(), Set.of());
     private static final Map<Long, Long> recentRemovals = new HashMap<>();
+    private static final Map<UUID, List<Vec3>> vehicleEndpoints = new HashMap<>();
+    private static List<Vec3> previewEndpoints = List.of();
+    private static boolean previewChanged;
     private static long gameTicks;
     private static int ticks;
 
@@ -58,6 +64,9 @@ public final class ClientBeamLights {
         if (active.level() != level) {
             active = new Snapshot(level, Map.of(), Set.of());
             recentRemovals.clear();
+            vehicleEndpoints.clear();
+            previewEndpoints = List.of();
+            previewChanged = true;
             gameTicks = 0;
             ticks = UPDATE_INTERVAL - 1;
         }
@@ -66,10 +75,36 @@ public final class ClientBeamLights {
         }
         gameTicks++;
         recentRemovals.values().removeIf(expiry -> expiry <= gameTicks);
-        if (++ticks < UPDATE_INTERVAL) {
+        boolean resample = ++ticks >= UPDATE_INTERVAL;
+        if (resample) {
+            ticks = 0;
+        }
+
+        List<AutomobileEntity> enabled = AutomobileHeadlights.enabledVehicles(level);
+        Set<UUID> enabledIds = new HashSet<>();
+        enabled.forEach(automobile -> enabledIds.add(automobile.getUUID()));
+        // A missing key represents off. Even a clipped-to-zero beam keeps an empty cache entry.
+        boolean switched = vehicleEndpoints.keySet().retainAll(enabledIds);
+        for (AutomobileEntity automobile : enabled) {
+            UUID id = automobile.getUUID();
+            boolean justEnabled = !vehicleEndpoints.containsKey(id);
+            if (resample || justEnabled) {
+                List<Vec3> points = new ArrayList<>();
+                AutomobileHeadlights.collectLightEndpoints(level, automobile, points::add);
+                vehicleEndpoints.put(id, List.copyOf(points));
+                switched |= justEnabled;
+            }
+        }
+        boolean refreshPreview = resample || previewChanged;
+        if (!resample && !switched && !refreshPreview) {
             return;
         }
-        ticks = 0;
+        if (refreshPreview) {
+            List<Vec3> points = new ArrayList<>();
+            BeamPreview.collectLightEndpoints(level, points::add);
+            previewEndpoints = List.copyOf(points);
+            previewChanged = false;
+        }
 
         Map<Long, Integer> next = new HashMap<>();
         Consumer<Vec3> collect = point -> {
@@ -82,9 +117,14 @@ public final class ClientBeamLights {
                 next.merge(position.asLong(), 1, Integer::sum);
             }
         };
-        AutomobileHeadlights.collectLightEndpoints(level, collect);
-        BeamPreview.collectLightEndpoints(level, collect);
+        vehicleEndpoints.values().forEach(points -> points.forEach(collect));
+        previewEndpoints.forEach(collect);
         replace(level, next);
+    }
+
+    /** Client commands request a preview-only refresh on the next client tick. */
+    public static void requestPreviewRefresh() {
+        previewChanged = true;
     }
 
     private static void replace(ClientLevel level, Map<Long, Integer> next) {
@@ -188,6 +228,9 @@ public final class ClientBeamLights {
             // This entire light engine is discarded with its level; retain no world/entity references.
             active = new Snapshot(null, Map.of(), Set.of());
             recentRemovals.clear();
+            vehicleEndpoints.clear();
+            previewEndpoints = List.of();
+            previewChanged = false;
             gameTicks = 0;
             ticks = 0;
         }

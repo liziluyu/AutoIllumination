@@ -6,6 +6,7 @@ import com.liziluyu.autoillumination.client.beam.BeamRenderer;
 import com.liziluyu.autoillumination.client.beam.BeamStyle;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import io.github.foundationgames.automobility.entity.AutomobileEntity;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
@@ -49,7 +50,7 @@ public final class AutomobileHeadlights {
         Vec3 camera = event.getCamera().getPosition();
         try {
             for (Entity entity : level.entitiesForRendering()) {
-                if (!(entity instanceof AutomobileEntity automobile) || automobile.isRemoved()) {
+                if (!(entity instanceof AutomobileEntity automobile) || !isEnabled(level, automobile)) {
                     continue;
                 }
                 List<FrameLightProfiles.Beam> lights = FrameLightProfiles.beams(automobile.getFrame().getId());
@@ -104,25 +105,43 @@ public final class AutomobileHeadlights {
         if (level == null || endpoint == null) {
             return;
         }
-        HeadlightConfig.Settings settings = HeadlightConfig.current();
-        if (settings.opacity() <= 0f) {
+        for (AutomobileEntity automobile : enabledVehicles(level)) {
+            collectLightEndpoints(level, automobile, endpoint);
+        }
+    }
+
+    /** Cheap switch-state scan: does not calculate model poses or cast collision rays. */
+    public static List<AutomobileEntity> enabledVehicles(ClientLevel level) {
+        List<AutomobileEntity> result = new ArrayList<>();
+        for (Entity entity : level.entitiesForRendering()) {
+            if (entity instanceof AutomobileEntity automobile && isEnabled(level, automobile)) {
+                result.add(automobile);
+            }
+        }
+        return result;
+    }
+
+    /** Samples only this car, so switching another car does not resample its moving light positions. */
+    public static void collectLightEndpoints(ClientLevel level, AutomobileEntity automobile, Consumer<Vec3> endpoint) {
+        if (!isEnabled(level, automobile)) {
             return;
         }
-        for (Entity entity : level.entitiesForRendering()) {
-            if (!(entity instanceof AutomobileEntity automobile) || automobile.isRemoved()) {
-                continue;
-            }
-            List<FrameLightProfiles.Beam> lights = FrameLightProfiles.beams(automobile.getFrame().getId());
-            for (FrameLightProfiles.Beam light : lights) {
-                BeamPose pose = beamPose(automobile, light, 1f);
-                float length = BeamRenderer.clipLength(level, pose.origin(), pose.direction(),
-                    settings.length(), automobile);
-                if (length > 0f) {
-                    endpoint.accept(pose.origin());
-                    endpoint.accept(pose.origin().add(pose.direction().scale(length)));
-                }
+        HeadlightConfig.Settings settings = HeadlightConfig.current();
+        for (FrameLightProfiles.Beam light : FrameLightProfiles.beams(automobile.getFrame().getId())) {
+            BeamPose pose = beamPose(automobile, light, 1f);
+            float length = BeamRenderer.clipLength(level, pose.origin(), pose.direction(),
+                settings.length(), automobile);
+            if (length > 0f) {
+                endpoint.accept(pose.origin());
+                endpoint.accept(pose.origin().add(pose.direction().scale(length)));
             }
         }
+    }
+
+    private static boolean isEnabled(ClientLevel level, AutomobileEntity automobile) {
+        return !automobile.isRemoved() && HeadlightConfig.current().opacity() > 0f
+            && !FrameLightProfiles.beams(automobile.getFrame().getId()).isEmpty()
+            && HeadlightActivation.shouldEnable(level, automobile);
     }
 
     private static BeamPose beamPose(AutomobileEntity automobile, FrameLightProfiles.Beam light,

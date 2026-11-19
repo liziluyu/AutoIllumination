@@ -64,6 +64,7 @@ public final class BeamPreview {
                                     parseColor(StringArgumentType.getString(context, "color"))))))))
                 .then(Commands.literal("clear").executes(context -> {
                     preview = null;
+                    ClientBeamLights.requestPreviewRefresh();
                     context.getSource().sendSuccess(
                         () -> Component.translatable("commands.autoillumination.beam.cleared"), false);
                     return 1;
@@ -84,6 +85,7 @@ public final class BeamPreview {
         // Capturing these once lets the player walk around the beam without moving it.
         Vec3 origin = player.getEyePosition().add(direction);
         preview = new Preview(level, origin, direction, style);
+        ClientBeamLights.requestPreviewRefresh();
         source.sendSuccess(() -> Component.translatable("commands.autoillumination.beam.preview",
             range, signal, String.format(Locale.ROOT, "%06X", color)), false);
         return 1;
