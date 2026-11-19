@@ -15,7 +15,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 /**
- * Client-only unlit square-frustum renderer. Draw and flush during AFTER_PARTICLES,
+ * Client-only unlit rectangular-frustum renderer. Draw and flush during AFTER_PARTICLES,
  * so the particles output target also works with Fabulous graphics.
  */
 public final class BeamRenderer {
@@ -159,18 +159,25 @@ public final class BeamRenderer {
     private static void side(VertexConsumer vertices, Matrix4f matrix, BeamStyle style,
                               int first, int second, float start, float end, float startTaper,
                               float endTaper, float red, float green, float blue) {
-        float startHalf = style.startHalfWidth() + start * style.spread();
-        float endHalf = style.startHalfWidth() + end * style.spread();
-        vertex(vertices, matrix, first, startHalf, start, style.opacity(), startTaper, red, green, blue);
-        vertex(vertices, matrix, second, startHalf, start, style.opacity(), startTaper, red, green, blue);
-        vertex(vertices, matrix, second, endHalf, end, style.opacity(), endTaper, red, green, blue);
-        vertex(vertices, matrix, first, endHalf, end, style.opacity(), endTaper, red, green, blue);
+        float startHalfWidth = style.startHalfWidth() + start * style.spread();
+        float startHalfHeight = style.startHalfHeight() + start * style.spread();
+        float endHalfWidth = style.startHalfWidth() + end * style.spread();
+        float endHalfHeight = style.startHalfHeight() + end * style.spread();
+        vertex(vertices, matrix, first, startHalfWidth, startHalfHeight, start,
+                style.opacity(), startTaper, red, green, blue);
+        vertex(vertices, matrix, second, startHalfWidth, startHalfHeight, start,
+                style.opacity(), startTaper, red, green, blue);
+        vertex(vertices, matrix, second, endHalfWidth, endHalfHeight, end,
+                style.opacity(), endTaper, red, green, blue);
+        vertex(vertices, matrix, first, endHalfWidth, endHalfHeight, end,
+                style.opacity(), endTaper, red, green, blue);
     }
 
-    private static void vertex(VertexConsumer vertices, Matrix4f matrix, int corner, float half,
-                                float z, float opacity, float taper, float red, float green, float blue) {
+    private static void vertex(VertexConsumer vertices, Matrix4f matrix, int corner,
+                                float halfWidth, float halfHeight, float z,
+                                float opacity, float taper, float red, float green, float blue) {
         // UV0 stores two floats rather than texture coordinates; byte alpha would lose dim beams.
-        vertices.vertex(matrix, CORNER_X[corner] * half, CORNER_Y[corner] * half, z)
+        vertices.vertex(matrix, CORNER_X[corner] * halfWidth, CORNER_Y[corner] * halfHeight, z)
                 .uv(opacity, taper)
                 .color(red, green, blue, 1f)
                 .endVertex();

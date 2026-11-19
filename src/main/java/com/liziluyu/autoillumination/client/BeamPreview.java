@@ -31,7 +31,7 @@ import net.minecraftforge.fml.common.Mod;
 public final class BeamPreview {
     private static final int DEFAULT_RANGE = 16;
     private static final int DEFAULT_SIGNAL = 8;
-    private static final int DEFAULT_COLOR = 0xFFFFFF;
+    private static final int DEFAULT_COLOR = 0xFFFCC6;
     private static final DynamicCommandExceptionType INVALID_COLOR = new DynamicCommandExceptionType(
         value -> Component.translatable("commands.autoillumination.beam.invalid_color", value));
     private static final SimpleCommandExceptionType NO_PLAYER = new SimpleCommandExceptionType(
@@ -124,8 +124,7 @@ public final class BeamPreview {
             return;
         }
         Vec3 end = current.origin().add(current.direction().scale(length));
-        // sqrt(2) also encloses the corners of a rotated square cross-section.
-        double radius = (current.style().startHalfWidth() + length * current.style().spread()) * Math.sqrt(2);
+        double radius = current.style().boundingRadius(length);
         if (!event.getFrustum().isVisible(new AABB(current.origin(), end).inflate(radius))) {
             return;
         }

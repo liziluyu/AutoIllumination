@@ -24,6 +24,8 @@ public final class AutomobileModelPose {
             (float) Math.toRadians(displacement.getAngularZ(partialTick))));
         matrix.rotate(Axis.ZP.rotationDegrees(180));
         matrix.rotate(Axis.YP.rotationDegrees(automobile.getAutomobileYaw(partialTick) + 180f));
+        // Model +Y points down after Z180: this raises the frame by the installed wheel radius.
+        // Lamp offsetY is additional height and must not add the wheel radius a second time.
         matrix.translate(0f, -automobile.getWheels().model().radius() / 16f, 0f);
         matrix.translate(0f, (float) (automobile.getSuspensionBounce(partialTick) * 0.048f
             + (automobile.engineRunning()
