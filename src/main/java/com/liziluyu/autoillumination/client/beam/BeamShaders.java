@@ -20,7 +20,7 @@ public final class BeamShaders {
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         // Forge owns shader lifetime and replaces this reference after each resource reload.
-        event.registerShader(new ShaderInstance(event.getResourceProvider(),
+        event.registerShader(new BeamShaderInstance(event.getResourceProvider(),
                 new ResourceLocation(AutoIllumination.MOD_ID, "spotlight_beam"),
                 DefaultVertexFormat.POSITION_TEX_COLOR), shader -> beam = shader);
     }

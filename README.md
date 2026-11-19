@@ -29,7 +29,17 @@ Minecraft Forge 1.20.1 模组，包含可复用的客户端光柱渲染器和游
 
 渲染器基于 Create Shining Stage 的聚光灯视觉方案，为 Forge 1.20.1 改写。它使用 Forge 的 `RegisterShadersEvent`、原生 `ShaderInstance` 和本模组的 GLSL 着色器，无需安装或内嵌 Veil，也不依赖 Create、Sable。透明度和渐隐数据放在浮点 UV 中，保留低强度下的精度；绘制时启用深度检测、关闭背面剔除和深度写入。
 
-预览在 `RenderLevelStageEvent.AFTER_PARTICLES` 中使用独立缓冲区绘制，渲染类型选择粒子输出目标以配合 Fabulous 模式。复用时应在同一阶段提交批次，避免与其他渲染阶段的输出目标混用。资源重载会重新注册着色器。光影包兼容性仍需实际游戏验证。
+预览在 `RenderLevelStageEvent.AFTER_PARTICLES` 中使用独立缓冲区绘制，渲染类型选择粒子输出目标以配合 Fabulous 模式。复用时应在同一阶段提交批次，避免与其他渲染阶段的输出目标混用。资源重载会重新注册着色器。
+
+## Oculus 光影兼容
+
+光柱包含针对 **Oculus 1.8.0 / Forge 1.20.1** 的可选客户端适配，参考 Veil 的 Iris 帧缓冲接入思路及 [Veil PR #213](https://github.com/FoundryMC/Veil/pull/213) 中关于缓冲恢复和颜色纹理翻转的修正。无需安装 Veil。
+
+Oculus 会在光影开启时关闭未知原生着色器的颜色写入，单独注册 `ShaderInstance` 仍可能看不到光柱。适配只作用于本模组的光柱着色器：在世界渲染期间恢复 Oculus 保存的颜色/深度写入状态，并将光柱输出接入当前 `colortex0` 与场景深度纹理。根据透明阶段和翻转状态选择 main/alt 纹理，避免固定写入错误副本；绘制结束恢复此前的帧缓冲。阴影阶段不进行这项重定向。
+
+关闭光影或未安装 Oculus 时使用原有渲染路径。Oculus 仅作为 `compileOnly` 编译依赖和本地开发运行依赖，不内嵌、不成为玩家的必需依赖。当前接入使用 Oculus 1.8.0 的内部 API，包括读取管线的 `renderTargets` 字段；未来版本若改变接口，需要重新核对。资源重载、窗口尺寸与光影管线变化时会重新读取目标纹理。
+
+这是将光柱写入光影合成前的颜色缓冲，并未向光影包增加动态光源或阴影。具体光影包的后期处理仍可能改变光柱的颜色和透明度，实际画面需要游戏内验证。
 
 ## 开发环境
 

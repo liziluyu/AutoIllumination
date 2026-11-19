@@ -61,7 +61,7 @@ repositories {
     }
 }
 
-// Development-only mods stay off the compile classpath and published dependencies.
+// Optional development runtime mods stay separate from published dependencies.
 configurations {
     localRuntime
     runtimeClasspath.extendsFrom localRuntime
@@ -70,6 +70,8 @@ configurations {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     implementation fg.deobf("maven.modrinth:automobility:${automobility_version}")
+    // Optional client bridge; Oculus remains a development-only runtime mod below.
+    compileOnly fg.deobf("maven.modrinth:oculus:${oculus_version}")
     localRuntime fg.deobf("maven.modrinth:riautomobility:${riautomobility_version}")
     localRuntime fg.deobf("maven.modrinth:geckolib:${geckolib_version}")
     localRuntime fg.deobf("maven.modrinth:oculus:${oculus_version}")
