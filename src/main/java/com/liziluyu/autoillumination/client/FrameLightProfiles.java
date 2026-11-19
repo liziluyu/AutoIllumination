@@ -55,10 +55,11 @@ public final class FrameLightProfiles {
     }
 
     /**
-     * Returns the immutable beam list for an exact frame ID, or an empty list if it is unknown.
+     * Config overrides take precedence over built-ins, including explicitly empty beam lists.
+     * Returns an empty list for an ID with neither a config override nor a built-in profile.
      */
     public static List<Beam> beams(ResourceLocation frameId) {
-        return PROFILES.getOrDefault(frameId, List.of());
+        return FrameLightOverrides.beams(frameId, PROFILES.getOrDefault(frameId, List.of()));
     }
 
     private static Map<ResourceLocation, List<Beam>> createProfiles() {

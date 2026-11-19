@@ -16,7 +16,7 @@ Minecraft Forge 1.20.1 模组，包含车辆头灯、可复用的客户端光柱
 
 姿态按 Automobility 0.4.2 的实体渲染器与车架渲染器顺序计算：在插值实体位置上应用 `Displacement` 的竖直位移和 X/Z 旋转、车身朝向、轮胎半径偏移，以及车架悬挂和振动位移。RIAutomobility 1.0.4b 的整车渲染也使用这条变换链，无需新增运行依赖。绘制保留完整旋转，碰撞射线使用同一变换后的发射点与方向。这里跟随车架整体姿态，不读取特定模型骨骼或车轮、附件的独立动画。
 
-灯位在 `client/FrameLightProfiles.java` 中维护，按完整 `namespace:path` 精确匹配，未匹配的 ID 不绘制。已列出 Automobility 0.4.2 的 32 个车架和 RIAutomobility 1.0.4b 的 13 个车架；每个 ID 有独立的不可变光柱列表，默认均为空。当前仅显式为五种基础汽车（`wooden_motorcar`、`copper_motorcar`、`steel_motorcar`、`golden_motorcar`、`bejeweled_motorcar`，命名空间均为 `automobility`）配置双灯：宽高均为 3，向前 21.8，左右各 4.5，额外向上偏移为 6.5；左右灯分别向外转 10°，均向下转 5°。其余车架保持 `List.of()`，不绘制光柱。
+内置灯位在 `client/FrameLightProfiles.java` 中维护，按完整 `namespace:path` 精确匹配。已列出 Automobility 0.4.2 的 32 个车架和 RIAutomobility 1.0.4b 的 13 个车架；每个 ID 有独立的不可变光柱列表。当前为五种基础汽车、四种人力车、RIA 的五种双座汽车、五种四座汽车、lorry 和 dmc12 配置了灯位，其余车架的内置列表为空。五种基础汽车（`wooden_motorcar`、`copper_motorcar`、`steel_motorcar`、`golden_motorcar`、`bejeweled_motorcar`，命名空间均为 `automobility`）配置双灯：宽高均为 3，向前 21.8，左右各 4.5，额外向上偏移为 6.5；左右灯分别向外转 10°，均向下转 5°。下述客户端配置可以覆盖这些内置列表，也可以为其他车架 ID 添加光柱。
 
 每项格式为 `new Beam(width16, height16, offsetX16, offsetY16, offsetZ16, yawDegrees, pitchDegrees, rollDegrees)`。前五项尺寸和偏移以 **1/16 格** 为单位，支持小数；后三项旋转以**度**为单位。宽和高是发射口的完整尺寸，而非半径；偏移相对于车架模型原点，正 X 向车身右侧，正 Y 向上，正 Z 向前。偏移随车架整体姿态旋转。车架原点已经按所装轮胎的**半径**抬升，不需要在 `offsetY16` 中重复添加轮高；水平且无弹跳/振动时，灯位高度为 `实体原点Y + 轮胎半径/16 + offsetY16/16`。五种基础汽车的配置示例：
 
@@ -42,6 +42,20 @@ opacity = 0.15
 - `color`：六位 RGB 十六进制字符串，不带 `#`。
 - `openingAngleDegrees`：水平和垂直方向的完整张开角，单位度，范围 0–179；0 为平行光柱，每侧半尺寸按 `tan(角度 / 2)` 随距离增加。
 - `opacity`：每个侧面的不透明度，范围 0–1；0 完全透明、1 完全不透明，沿长度保留末端渐隐。
+
+在同一个 `[headlights]` 区段中使用 `frameOverrides` 自定义各车架的光柱列表，默认是 `[]`（不覆盖内置灯位）。实际配置文件中也会生成带格式说明的注释示例：
+
+```toml
+frameOverrides = [
+    "automobility:wooden_motorcar | 3,3,-4.5,6.5,21.8,-10,5,0; 3,3,4.5,6.5,21.8,10,5,0",
+    "examplemod:custom_frame | 3,3,0,6.5,21.8",
+    "automobility:steel_motorcar |"
+]
+```
+
+每条字符串格式为 `完整车架 ID | width,height,x,y,z,yaw,pitch,roll; 下一束光柱`。前五项尺寸和偏移使用 **1/16 格**，后三项旋转使用**度**，坐标和旋转方向与上述 `Beam` 相同；旋转三个值可一起省略，默认全为 0。用分号分隔同一车架的多束光柱，末尾不加分号。匹配的配置会**完整替换**该 ID 的内置列表，不与内置光柱叠加；竖线右侧留空可禁用该车架，未列出的 ID 继续使用内置列表。可为任何合法的车架 ID 添加配置，无需安装 RIA 或修改 Java 代码。
+
+配置在加载和重载时解析并缓存，光柱绘制与虚拟光源都通过同一个优先级查询。格式、尺寸或数值不合法的条目整条忽略并记录警告，其他有效条目继续生效；同一 ID 重复时，最后一个有效条目生效。删除覆盖条目或将整个列表恢复为 `[]` 后，该 ID 恢复内置灯位。
 
 头灯按上述乘客、夜晚和亮度规则自动开关。光柱受车身和地形的正常遮挡，末端渐隐范围为 3 格；实际光柱不足 3 格时从起点开始渐隐。沿用下述 Oculus 适配，并通过下述虚拟客户端光源照亮周围方块。
 
