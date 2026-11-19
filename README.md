@@ -35,6 +35,14 @@ Minecraft Forge 1.20.1 模组开发项目。目前仅包含开发环境和模组
 
 运行目录和构建缓存已加入 `.gitignore`。模组信息和依赖版本在 `gradle.properties` 中维护，生成的资源放在 `src/generated/resources/`。
 
+## 模组依赖
+
+- [Automobility](https://modrinth.com/mod/automobility)：`0.4.2+1.20.1-forge`，加入编译和运行时，并在 `mods.toml` 中声明为必需依赖。
+- [RIAutomobility](https://modrinth.com/mod/riautomobility)：`1.0.4b`（JAR 内版本为 `1.0.4`），仅加入开发运行时。
+- [GeckoLib](https://modrinth.com/mod/geckolib)：`4.8.4`，作为 RIAutomobility 所需的开发运行时依赖。
+
+依赖通过 Modrinth Maven 下载并由 ForgeGradle 反混淆。`localRuntime` 只扩展运行时类路径，RIAutomobility 和 GeckoLib 不会被声明为本模组的强制依赖，也不会打包进本模组 JAR。玩家安装本模组时需要自行安装 Automobility。
+
 ## 仓库
 
 上游仓库：[liziluyu/AutoIllumination](https://github.com/liziluyu/AutoIllumination)，开发分支：`1.20.1forge`。本地分支跟踪 `origin/1.20.1forge`。

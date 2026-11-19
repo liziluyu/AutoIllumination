@@ -48,8 +48,27 @@ minecraft {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
+repositories {
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+}
+
+// Development-only mods stay off the compile classpath and published dependencies.
+configurations {
+    localRuntime
+    runtimeClasspath.extendsFrom localRuntime
+}
+
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation fg.deobf("maven.modrinth:automobility:${automobility_version}")
+    localRuntime fg.deobf("maven.modrinth:riautomobility:${riautomobility_version}")
+    localRuntime fg.deobf("maven.modrinth:geckolib:${geckolib_version}")
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -57,6 +76,7 @@ tasks.named('processResources', ProcessResources).configure {
             minecraft_version_range: minecraft_version_range,
             forge_version_range: forge_version_range,
             loader_version_range: loader_version_range,
+            automobility_version_range: automobility_version_range,
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license,
             mod_version: mod_version, mod_authors: mod_authors, mod_description: mod_description
     ]
