@@ -6,11 +6,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Explicit frame light profiles; unconfigured frames have no beams. */
+/**
+ * Explicit frame light profiles; unconfigured frames have no beams.
+ */
 public final class FrameLightProfiles {
     // Y is extra height above the frame origin, which already includes the installed wheel radius.
     private static final Beam MOTORCAR_LEFT = new Beam(3f, 3f, -4.5f, 6.5f, 21.8f, -10f, 5f, 0f);
     private static final Beam MOTORCAR_RIGHT = new Beam(3f, 3f, 4.5f, 6.5f, 21.8f, 10f, 5f, 0f);
+    private static final Beam MOTORCAR_DOUBLE_LEFT = new Beam(3f, 3f, -10.5f, 6.5f, 21.8f, 0f, 5f, 0f);
+    private static final Beam MOTORCAR_DOUBLE_RIGHT = new Beam(3f, 3f, 10.5f, 6.5f, 21.8f, 0f, 5f, 0f);
+    private static final Beam MOTORCAR_QUAD_LEFT = new Beam(3f, 3f, -10.5f, 6.5f, 29.8f, 0f, 5f, 0f);
+    private static final Beam MOTORCAR_QUAD_RIGHT = new Beam(3f, 3f, 10.5f, 6.5f, 29.8f, 0f, 5f, 0f);
+    private static final Beam RICKSHAW = new Beam(3f, 3f, 0f, 6.5f, 13.8f, 0f, 5f, 0f);
+    private static final Beam LORRY_LEFT = new Beam(6f, 8f, -13f, 9f, 58f, 0f, 5f, 0f);
+    private static final Beam LORRY_RIGHT = new Beam(6f, 8f, 13f, 9f, 58f, 0f, 5f, 0f);
+    private static final Beam DMC12_LEFT = new Beam(12f, 5f, -14f, 7.5f, 51f, 0f, 5f, 0f);
+    private static final Beam DMC12_RIGHT = new Beam(12f, 5f, 14f, 7.5f, 51f, 0f, 5f, 0f);
     private static final Map<ResourceLocation, List<Beam>> PROFILES = createProfiles();
 
     private FrameLightProfiles() {
@@ -24,15 +35,17 @@ public final class FrameLightProfiles {
      */
     public record Beam(float width16, float height16, float offsetX16, float offsetY16, float offsetZ16,
                        float yawDegrees, float pitchDegrees, float rollDegrees) {
-        /** Unrotated lamp, retained for profiles that only specify a size and position. */
+        /**
+         * Unrotated lamp, retained for profiles that only specify a size and position.
+         */
         public Beam(float width16, float height16, float offsetX16, float offsetY16, float offsetZ16) {
             this(width16, height16, offsetX16, offsetY16, offsetZ16, 0f, 0f, 0f);
         }
 
         public Beam {
             if (!Float.isFinite(width16) || !Float.isFinite(height16)
-                || !Float.isFinite(offsetX16) || !Float.isFinite(offsetY16) || !Float.isFinite(offsetZ16)
-                || !Float.isFinite(yawDegrees) || !Float.isFinite(pitchDegrees) || !Float.isFinite(rollDegrees)) {
+                    || !Float.isFinite(offsetX16) || !Float.isFinite(offsetY16) || !Float.isFinite(offsetZ16)
+                    || !Float.isFinite(yawDegrees) || !Float.isFinite(pitchDegrees) || !Float.isFinite(rollDegrees)) {
                 throw new IllegalArgumentException("Beam dimensions, offsets and rotations must be finite");
             }
             if (width16 <= 0f || height16 <= 0f) {
@@ -41,7 +54,9 @@ public final class FrameLightProfiles {
         }
     }
 
-    /** Returns the immutable beam list for an exact frame ID, or an empty list if it is unknown. */
+    /**
+     * Returns the immutable beam list for an exact frame ID, or an empty list if it is unknown.
+     */
     public static List<Beam> beams(ResourceLocation frameId) {
         return PROFILES.getOrDefault(frameId, List.of());
     }
@@ -71,10 +86,10 @@ public final class FrameLightProfiles {
         profiles.put(id("automobility", "standard_green"), List.of());
         profiles.put(id("automobility", "standard_red"), List.of());
         profiles.put(id("automobility", "standard_black"), List.of());
-        profiles.put(id("automobility", "amethyst_rickshaw"), List.of());
-        profiles.put(id("automobility", "quartz_rickshaw"), List.of());
-        profiles.put(id("automobility", "prismarine_rickshaw"), List.of());
-        profiles.put(id("automobility", "echo_rickshaw"), List.of());
+        profiles.put(id("automobility", "amethyst_rickshaw"), List.of(RICKSHAW));
+        profiles.put(id("automobility", "quartz_rickshaw"), List.of(RICKSHAW));
+        profiles.put(id("automobility", "prismarine_rickshaw"), List.of(RICKSHAW));
+        profiles.put(id("automobility", "echo_rickshaw"), List.of(RICKSHAW));
         profiles.put(id("automobility", "red_tractor"), List.of());
         profiles.put(id("automobility", "yellow_tractor"), List.of());
         profiles.put(id("automobility", "green_tractor"), List.of());
@@ -84,18 +99,18 @@ public final class FrameLightProfiles {
         profiles.put(id("automobility", "pineapple"), List.of());
 
         // RIAutomobility 1.0.4b built-in frames.
-        profiles.put(id("riautomobility", "wooden_doublemotorcar"), List.of());
-        profiles.put(id("riautomobility", "copper_doublemotorcar"), List.of());
-        profiles.put(id("riautomobility", "steel_doublemotorcar"), List.of());
-        profiles.put(id("riautomobility", "golden_doublemotorcar"), List.of());
-        profiles.put(id("riautomobility", "bejeweled_doublemotorcar"), List.of());
-        profiles.put(id("riautomobility", "wooden_quadmotorcar"), List.of());
-        profiles.put(id("riautomobility", "copper_quadmotorcar"), List.of());
-        profiles.put(id("riautomobility", "steel_quadmotorcar"), List.of());
-        profiles.put(id("riautomobility", "golden_quadmotorcar"), List.of());
-        profiles.put(id("riautomobility", "bejeweled_quadmotorcar"), List.of());
-        profiles.put(id("riautomobility", "lorry"), List.of());
-        profiles.put(id("riautomobility", "dmc12"), List.of());
+        profiles.put(id("riautomobility", "wooden_doublemotorcar"), List.of(MOTORCAR_DOUBLE_LEFT, MOTORCAR_DOUBLE_RIGHT));
+        profiles.put(id("riautomobility", "copper_doublemotorcar"), List.of(MOTORCAR_DOUBLE_LEFT, MOTORCAR_DOUBLE_RIGHT));
+        profiles.put(id("riautomobility", "steel_doublemotorcar"), List.of(MOTORCAR_DOUBLE_LEFT, MOTORCAR_DOUBLE_RIGHT));
+        profiles.put(id("riautomobility", "golden_doublemotorcar"), List.of(MOTORCAR_DOUBLE_LEFT, MOTORCAR_DOUBLE_RIGHT));
+        profiles.put(id("riautomobility", "bejeweled_doublemotorcar"), List.of(MOTORCAR_DOUBLE_LEFT, MOTORCAR_DOUBLE_RIGHT));
+        profiles.put(id("riautomobility", "wooden_quadmotorcar"), List.of(MOTORCAR_QUAD_LEFT, MOTORCAR_QUAD_RIGHT));
+        profiles.put(id("riautomobility", "copper_quadmotorcar"), List.of(MOTORCAR_QUAD_LEFT, MOTORCAR_QUAD_RIGHT));
+        profiles.put(id("riautomobility", "steel_quadmotorcar"), List.of(MOTORCAR_QUAD_LEFT, MOTORCAR_QUAD_RIGHT));
+        profiles.put(id("riautomobility", "golden_quadmotorcar"), List.of(MOTORCAR_QUAD_LEFT, MOTORCAR_QUAD_RIGHT));
+        profiles.put(id("riautomobility", "bejeweled_quadmotorcar"), List.of(MOTORCAR_QUAD_LEFT, MOTORCAR_QUAD_RIGHT));
+        profiles.put(id("riautomobility", "lorry"), List.of(LORRY_LEFT,LORRY_RIGHT));
+        profiles.put(id("riautomobility", "dmc12"), List.of(DMC12_LEFT,DMC12_RIGHT));
         profiles.put(id("riautomobility", "standard_formula"), List.of());
 
         return Map.copyOf(profiles);
