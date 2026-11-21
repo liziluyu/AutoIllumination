@@ -14,7 +14,7 @@ Minecraft Forge 1.20.1 模组，包含车辆头灯、可复用的客户端光柱
 
 环境亮度取随时间/天气衰减的天空光照与服务器下发的方块光照两者的最大值。天空衰减根据当前维度太阳角度、降雨和雷暴实时计算，不使用客户端未随时间刷新的 `isNight()` / 无参数 `getSkyDarken()` 缓存。保留服务器方块光照的独立副本，避免头灯或预览的虚拟光源照亮车辆后造成自动开关抖动；收到光照更新时刷新，区块和世界卸载时清理。此规则仅作用于车辆头灯，命令预览仍由命令控制。每个客户端游戏 tick 检查开关状态，开灯或关灯时当次更新对应车辆的虚拟光源，不等待下一次 5 tick 位置采样；光照传播和区块重绘仍由客户端引擎执行。
 
-姿态按 Automobility 0.4.2 的实体渲染器与车架渲染器顺序计算：在插值实体位置上应用 `Displacement` 的竖直位移和 X/Z 旋转、车身朝向、轮胎半径偏移，以及车架悬挂和振动位移。RIAutomobility 1.0.4b 的整车渲染也使用这条变换链，无需新增运行依赖。绘制保留完整旋转，碰撞射线使用同一变换后的发射点与方向。这里跟随车架整体姿态，不读取特定模型骨骼或车轮、附件的独立动画。
+姿态按 Automobility 0.4.2 的实体渲染器与车架渲染器顺序计算：在插值实体位置上应用 `Displacement` 的竖直位移和 X/Z 旋转、车身朝向、轮胎半径偏移，以及车架悬挂和振动位移。RIAutomobility 1.0.4b 的整车渲染也使用这条变换链，无需新增运行依赖。绘制保留完整旋转，碰撞射线使用同一变换后的发射点与方向。这里跟随车架整体姿态，模型标记使用默认骨骼姿态，不跟随车轮、附件或 GeckoLib 的独立骨骼动画。
 
 内置灯位在 `client/FrameLightProfiles.java` 中维护，按完整 `namespace:path` 精确匹配。已列出 Automobility 0.4.2 的 32 个车架和 RIAutomobility 1.0.4b 的 13 个车架；每个 ID 有独立的不可变光柱列表。当前为五种基础汽车、四种人力车、RIA 的五种双座汽车、五种四座汽车、lorry 和 dmc12 配置了灯位，其余车架的内置列表为空。五种基础汽车（`wooden_motorcar`、`copper_motorcar`、`steel_motorcar`、`golden_motorcar`、`bejeweled_motorcar`，命名空间均为 `automobility`）配置双灯：宽高均为 3，向前 21.8，左右各 4.5，额外向上偏移为 6.5；左右灯分别向外转 10°，均向下转 5°。下述客户端配置可以覆盖这些内置列表，也可以为其他车架 ID 添加光柱。
 
@@ -53,9 +53,17 @@ frameOverrides = [
 ]
 ```
 
-每条字符串格式为 `完整车架 ID | width,height,x,y,z,yaw,pitch,roll; 下一束光柱`。前五项尺寸和偏移使用 **1/16 格**，后三项旋转使用**度**，坐标和旋转方向与上述 `Beam` 相同；旋转三个值可一起省略，默认全为 0。用分号分隔同一车架的多束光柱，末尾不加分号。匹配的配置会**完整替换**该 ID 的内置列表，不与内置光柱叠加；竖线右侧留空可禁用该车架，未列出的 ID 继续使用内置列表。可为任何合法的车架 ID 添加配置，无需安装 RIA 或修改 Java 代码。
+每条字符串格式为 `完整车架 ID | width,height,x,y,z,yaw,pitch,roll; 下一束光柱`。前五项尺寸和偏移使用 **1/16 格**，后三项旋转使用**度**，坐标和旋转方向与上述 `Beam` 相同；旋转三个值可一起省略，默认全为 0。用分号分隔同一车架的多束光柱，末尾不加分号。匹配的配置会**完整替换**该 ID 的模型识别或内置列表，不与其他光柱叠加；竖线右侧留空可禁用该车架，也会禁止模型自动识别的灯。可为任何合法的车架 ID 添加配置，无需安装 RIA 或修改 Java 代码。
 
-配置在加载和重载时解析并缓存，光柱绘制与虚拟光源都通过同一个优先级查询。格式、尺寸或数值不合法的条目整条忽略并记录警告，其他有效条目继续生效；同一 ID 重复时，最后一个有效条目生效。删除覆盖条目或将整个列表恢复为 `[]` 后，该 ID 恢复内置灯位。
+配置在加载和重载时解析并缓存，光柱绘制与虚拟光源都通过同一个优先级查询：**config 覆盖 > RIA 自定义模型的 headlight 标记 > 内置灯位**。格式、尺寸或数值不合法的条目整条忽略并记录警告，其他有效条目继续生效；同一 ID 重复时，最后一个有效条目生效。删除覆盖条目或将整个列表恢复为 `[]` 后，该 ID 恢复模型识别或内置灯位。
+
+### RIA 自定义车模的灯位标记
+
+仅在客户端加载了 RIAutomobility 时才加载 `client/RiaModelHeadlights.java` 识别类。识别对象来自 RIA 同步的自定义车架定义，支持任意命名空间；普通 JsonEM 模型按 `layer_location` 读取 `assets/<namespace>/models/entity/<path>/main.json`，GeckoLib 模型按 `geo_model` 指定的资源读取。RIA 的内置车型仍使用上面的内置灯位。
+
+在模型中建立名称以 `headlight` 开头的块或骨骼组，例如 `headlight`、`headlight_left`、`headlight_right`。建议每盏灯使用一个无厚度矩形；识别使用实际几何面的中心和完整尺寸，计入父级与自身的默认旋转、普通模型的 `rotation_y`，以及 Gecko 模型的坐标轴转换。光柱沿矩形法线朝车头一侧发射；命名组内有多个矩形时分别生成光柱。退化成线或点的几何体不生成光柱。
+
+模型读取结果会缓存；资源包重载会清空缓存，RIA 同步的车架模型定义变化后会重新识别，退出世界时清理。识别结果同时用于光柱绘制、碰撞截断和虚拟光源定位。无法读取模型或没有有效标记时回退到内置灯位。
 
 头灯按上述乘客、夜晚和亮度规则自动开关。光柱受车身和地形的正常遮挡，末端渐隐范围为 3 格；实际光柱不足 3 格时从起点开始渐隐。沿用下述 Oculus 适配，并通过下述虚拟客户端光源照亮周围方块。
 
@@ -144,8 +152,8 @@ Oculus 会在光影开启时关闭未知原生着色器的颜色写入，单独�
 ## 模组依赖
 
 - [Automobility](https://modrinth.com/mod/automobility)：`0.4.2+1.20.1-forge`，加入编译和运行时，并在 `mods.toml` 中声明为必需依赖。
-- [RIAutomobility](https://modrinth.com/mod/riautomobility)：`1.0.4b`（JAR 内版本为 `1.0.4`），仅加入开发运行时。
-- [GeckoLib](https://modrinth.com/mod/geckolib/version/aC5KMoNg)：Forge 1.20.1 的 `4.8.4`，使用精确 Modrinth 版本 ID `aC5KMoNg` 固定，作为 RIAutomobility 所需的开发运行时依赖。同一个版本号对应多个加载器和 Minecraft 版本，仅使用 `4.8.4` 曾解析到 Fabric 1.21.4 文件，导致启动时找不到 `GeoModel`。
+- [RIAutomobility](https://modrinth.com/mod/riautomobility)：`1.0.4b`（JAR 内版本为 `1.0.4`），作为可选编译依赖及开发运行依赖，用于自定义模型灯位识别。
+- [GeckoLib](https://modrinth.com/mod/geckolib/version/aC5KMoNg)：Forge 1.20.1 的 `4.8.4`，使用精确 Modrinth 版本 ID `aC5KMoNg` 固定，作为可选编译依赖及 RIAutomobility 所需的开发运行依赖。同一个版本号对应多个加载器和 Minecraft 版本，仅使用 `4.8.4` 曾解析到 Fabric 1.21.4 文件，导致启动时找不到 `GeoModel`。
 
 - [Oculus](https://modrinth.com/mod/oculus/version/iQ1SwGc3)：Forge 1.20.1 的 `1.8.0`，仅加入开发运行时，用于测试光影包。
 - [Embeddium](https://modrinth.com/mod/embeddium/version/UTbfe5d1)：Forge 1.20.1 的 `0.3.31`，作为 Oculus 所需的开发运行时依赖。

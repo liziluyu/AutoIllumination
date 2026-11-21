@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Explicit frame light profiles; unconfigured frames have no beams.
+ * Resolves config overrides, optional model markers, then built-in frame profiles.
  */
 public final class FrameLightProfiles {
     // Y is extra height above the frame origin, which already includes the installed wheel radius.
@@ -55,11 +55,17 @@ public final class FrameLightProfiles {
     }
 
     /**
-     * Config overrides take precedence over built-ins, including explicitly empty beam lists.
-     * Returns an empty list for an ID with neither a config override nor a built-in profile.
+     * Profile precedence is config override, detected RIA model lamps, then built-in profile.
+     * Config overrides take precedence even when explicitly empty. Returns an empty list when
+     * no source defines lamps for this ID.
      */
     public static List<Beam> beams(ResourceLocation frameId) {
-        return FrameLightOverrides.beams(frameId, PROFILES.getOrDefault(frameId, List.of()));
+        List<Beam> override = FrameLightOverrides.override(frameId);
+        if (override != null) {
+            return override;
+        }
+        List<Beam> detected = RiaHeadlightCompat.beams(frameId);
+        return detected.isEmpty() ? PROFILES.getOrDefault(frameId, List.of()) : detected;
     }
 
     private static Map<ResourceLocation, List<Beam>> createProfiles() {

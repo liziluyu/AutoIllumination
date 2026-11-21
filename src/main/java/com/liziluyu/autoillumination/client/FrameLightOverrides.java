@@ -21,7 +21,12 @@ public final class FrameLightOverrides {
     private FrameLightOverrides() {
     }
 
-    /** An explicitly empty override disables lamps; only an absent ID falls back to built-ins. */
+    /** Returns null for an absent override; an explicitly empty list disables every lamp source. */
+    public static List<Beam> override(ResourceLocation frameId) {
+        return profiles.get(frameId);
+    }
+
+    /** Config overrides take precedence over every detected or built-in profile. */
     public static List<Beam> beams(ResourceLocation frameId, List<Beam> builtIn) {
         return profiles.getOrDefault(frameId, builtIn);
     }

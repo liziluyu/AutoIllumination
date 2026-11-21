@@ -35,13 +35,14 @@ public final class HeadlightConfig {
         OPACITY = builder.comment("Per-side opacity: 0 is fully transparent, 1 is fully opaque. The beam fades towards its end.")
             .defineInRange("opacity", DEFAULT_OPACITY, 0d, 1d);
         FRAME_OVERRIDES = builder.comment(
-                "Override built-in beams by full frame ID. Each string defines the complete beam list for one frame.",
+                "Override detected model lamps and built-in beams by full frame ID. Each string defines the complete beam list for one frame.",
                 "Format: namespace:frame_id | width,height,x,y,z,yaw,pitch,roll; next beam",
                 "Width/height are full dimensions; x/y/z are offsets. All five values use 1/16 of a block. Decimals are allowed; dimensions must be positive.",
                 "+X is right, +Y is up, +Z is forward. Y is additional height above the frame origin, which already includes the wheel radius.",
                 "Yaw/pitch/roll use degrees: positive yaw turns right, positive pitch points down, positive roll is clockwise when looking along the beam from behind.",
                 "Omit all three rotation values to use zero rotation. Separate beams with semicolons; do not add a trailing semicolon.",
-                "Leave the right side of | empty to disable beams for that frame. Unlisted IDs use built-in profiles. Frames from other mods are supported.",
+                "Leave the right side of | empty to disable beams for that frame, including detected model lamps.",
+                "Unlisted IDs use RIA custom-model headlight markers when available, then built-in profiles. Frames from other mods are supported.",
                 "For duplicate IDs, the last valid entry wins. Invalid entries are logged and ignored without replacing existing profiles.",
                 "Example (the default empty list applies no overrides; copy this assignment to replace frameOverrides = []):",
                 "frameOverrides = [",
